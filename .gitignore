@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.streamlit/
+data/parking_tickets.db
+data/raw/*.jsonl
+data/derived/*.parquet
