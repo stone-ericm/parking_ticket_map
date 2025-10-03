@@ -1,0 +1,5 @@
+using the Open Parking and Camera Violations API https://data.cityofnewyork.us/resource/nc67-uf89.json
+we will extract only the parking tickets and understand the location where they were issued
+in order to create a heatmap for new york city parking tickets based on the day of the week
+and the hour of the day. The heatmap should ideally be on the level of, for example,
+41st street between 8th ave and 7th ave, if that's possible.
