@@ -1,82 +1,93 @@
-# NYC Parking Ticket Heatmap
+# parking_ticket_map
 
-This repository implements the end-to-end pipeline proposed in `IMPLEMENTATION_PLAN.md` for exploring New York City parking tickets. It includes:
+An end-to-end data pipeline that pulls NYC parking and camera violation data, processes it, and visualizes ticket density on an interactive heatmap.
 
-- **Data ingestion** from the NYC Open Parking and Camera Violations API into a local SQLite database.
-- **Transformation and aggregation** jobs to derive per-street-segment ticket counts by day of week and hour of day.
-- **An interactive Streamlit application** that renders a heatmap using the aggregated dataset.
+## What It Does
 
-The stack relies solely on open-source tooling and can be executed locally with no recurring infrastructure costs.
+Street parking in NYC is a gamble. Some blocks get ticketed heavily at certain hours or days of the week, but that information is buried in millions of rows of city data. This tool surfaces those patterns by ingesting violation records from the NYC Open Data API, transforming them into street-segment-level aggregates, and rendering the results on an interactive map. The goal is simple: see where and when tickets cluster so you can make better parking decisions.
+
+## Pipeline Architecture
+
+The pipeline runs in three stages:
+
+1. **Ingest** (`ingest.py`) -- Pulls raw violation records from the NYC Open Parking and Camera Violations API and writes them to local storage as Parquet files.
+2. **Transform** (`transform.py`) -- Cleans, geocodes, and aggregates the raw data by street segment, day of week, and hour of day. Results are stored in a SQLite database via `storage.py`.
+3. **Visualize** (`streamlit_app.py`) -- A Streamlit app that reads from SQLite and renders a pydeck heatmap showing ticket density. Supports both Mapbox and OpenStreetMap tile layers.
+
+```
+NYC Open Data API
+      |
+      v
+  ingest.py  -->  raw Parquet files
+      |
+      v
+ transform.py --> storage.py --> SQLite
+      |
+      v
+ streamlit_app.py --> interactive heatmap (pydeck)
+```
+
+## Tech Stack
+
+- **Python** -- Core language for the entire pipeline
+- **pandas / pyarrow** -- Data manipulation and Parquet I/O
+- **requests** -- API client for NYC Open Data
+- **SQLite** -- Lightweight local storage for transformed data
+- **Streamlit** -- Web app framework for the visualization layer
+- **pydeck** -- Map rendering (WebGL-powered, Mapbox or OSM tiles)
 
 ## Getting Started
 
-### 1. Install dependencies
+### Prerequisites
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
+Python 3.10+ is required. A Mapbox API token is optional (falls back to OpenStreetMap).
+
+### Install
+
+```sh
+git clone https://github.com/stone-ericm/parking_ticket_map.git
+cd parking_ticket_map
 pip install -r requirements.txt
 ```
 
-### 2. Ingest data
+### Run the Pipeline
 
-Fetch parking ticket records into the local SQLite database. You can provide optional issue date bounds to limit the dataset during initial testing.
+Pull violation data from the NYC Open Data API:
 
-```bash
-python -m parking_ticket_map ingest --issue-date-from 2023-01-01 --issue-date-to 2023-01-31 --page-size 5000 --sleep 0.5
+```sh
+python -m parking_ticket_map.ingest
 ```
 
-> **Tip:** Provide your NYC Open Data App Token with `--app-token YOUR_TOKEN` for higher throughput.
+Transform and load into SQLite:
 
-### 3. Build aggregates
-
-Create the per-segment, per-day/hour dataset and overall segment summary.
-
-```bash
-python -m parking_ticket_map aggregate --min-samples 5
-python -m parking_ticket_map summary
+```sh
+python -m parking_ticket_map.transform
 ```
 
-This writes the following files:
+### Launch the Map
 
-- `data/derived/segment_time_counts.parquet`
-- `data/derived/segment_summary.parquet`
-
-### 4. Launch the heatmap UI
-
-```bash
+```sh
 streamlit run streamlit_app.py
 ```
 
-Use the sidebar controls to filter by day of week, hour range, ticket type, and minimum ticket counts per segment. The dashboard
-highlights the busiest corridors, surfaces quick summary metrics, and renders the heatmap on top of a New York City basemap for
-better context.
+The app will open in your browser with an interactive heatmap of ticket density by street segment, filterable by day of week and hour of day.
 
-> Without credentials the app automatically falls back to OpenStreetMap tiles. Set the `MAPBOX_API_KEY` environment variable (or
-> add a `mapbox_token` secret in Streamlit Cloud) to unlock Mapbox styles.
+## Configuration
 
-## Repository Layout
+Pipeline settings (API endpoints, file paths, batch sizes) are defined in `config.py`.
+
+## Project Structure
 
 ```
 parking_ticket_map/
-├── parking_ticket_map/
-│   ├── __init__.py
-│   ├── __main__.py
-│   ├── cli.py
-│   ├── config.py
-│   ├── ingest.py
-│   ├── storage.py
-│   └── transform.py
-├── streamlit_app.py
-├── IMPLEMENTATION_PLAN.md
-├── README.md
-├── requirements.txt
-└── project idea.txt
+    __init__.py
+    __main__.py
+    config.py
+    ingest.py
+    transform.py
+    storage.py
+data/
+    .gitkeep
+streamlit_app.py
+requirements.txt
 ```
-
-## Notes & Future Work
-
-- The aggregation pipeline approximates street segments using the borough, street name, and cross streets reported on the ticket. Integrating NYC Street Centerline data would yield richer geometries for map rendering.
-- The Streamlit heatmap uses ticket centroids for weighting. Replacing this with true segment geometries would further align the visualization with the original vision.
-- Consider scheduling the ingestion job (e.g., via GitHub Actions or a local cron job) to keep the dataset fresh.
-
