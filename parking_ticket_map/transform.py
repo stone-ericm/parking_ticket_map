@@ -22,16 +22,6 @@ class AggregationResult:
     output_path: Path
 
 
-DAY_NAME_ORDER = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-]
-
 
 def _parse_datetime(issue_date: str | None, violation_time: str | None) -> Optional[datetime]:
     if not issue_date:
