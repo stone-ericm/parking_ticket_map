@@ -4,3 +4,4 @@ __pycache__/
 data/parking_tickets.db
 data/raw/*.jsonl
 data/derived/*.parquet
+\!data/derived/segment_time_counts.parquet
