@@ -10,18 +10,18 @@ Street parking in NYC is a gamble. Some blocks get ticketed heavily at certain h
 
 The pipeline runs in three stages:
 
-1. **Ingest** (`ingest.py`) -- Pulls raw violation records from the NYC Open Parking and Camera Violations API and writes them to local storage as Parquet files.
-2. **Transform** (`transform.py`) -- Cleans, geocodes, and aggregates the raw data by street segment, day of week, and hour of day. Results are stored in a SQLite database via `storage.py`.
-3. **Visualize** (`streamlit_app.py`) -- A Streamlit app that reads from SQLite and renders a pydeck heatmap showing ticket density. Supports both Mapbox and OpenStreetMap tile layers.
+1. **Ingest** (`ingest.py`) -- Pulls raw violation records from the NYC Open Parking and Camera Violations API and writes them to a local SQLite database via `storage.py`.
+2. **Transform** (`transform.py`) -- Reads from SQLite, cleans, and aggregates the raw data by street segment, day of week, and hour of day. Results are written to Parquet files.
+3. **Visualize** (`streamlit_app.py`) -- A Streamlit app that reads Parquet files and renders a pydeck heatmap showing ticket density. Supports both Mapbox and OpenStreetMap tile layers.
 
 ```
 NYC Open Data API
       |
       v
-  ingest.py  -->  raw Parquet files
+  ingest.py --> storage.py --> SQLite
       |
       v
- transform.py --> storage.py --> SQLite
+ transform.py --> Parquet files
       |
       v
  streamlit_app.py --> interactive heatmap (pydeck)
@@ -55,13 +55,13 @@ pip install -r requirements.txt
 Pull violation data from the NYC Open Data API:
 
 ```sh
-python -m parking_ticket_map.ingest
+python -m parking_ticket_map ingest
 ```
 
-Transform and load into SQLite:
+Transform and aggregate into Parquet:
 
 ```sh
-python -m parking_ticket_map.transform
+python -m parking_ticket_map aggregate
 ```
 
 ### Launch the Map
