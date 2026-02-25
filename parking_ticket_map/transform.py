@@ -54,9 +54,12 @@ def _parse_datetime(issue_date: str | None, violation_time: str | None) -> Optio
             time_part = violation_time[:-1]
             try:
                 time_obj = datetime.strptime(time_part, "%H%M")
-                time_obj = time_obj.replace(
-                    hour=(time_obj.hour % 12) + (12 if am_pm == "PM" and time_obj.hour != 12 else 0)
-                )
+                hour_24 = time_obj.hour
+                if am_pm == "AM":
+                    hour_24 = 0 if hour_24 == 12 else hour_24
+                elif am_pm == "PM":
+                    hour_24 = hour_24 if hour_24 == 12 else hour_24 + 12
+                time_obj = time_obj.replace(hour=hour_24)
             except ValueError:
                 time_obj = None
         else:
