@@ -4,8 +4,8 @@ from __future__ import annotations
 import json
 import logging
 import time
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Dict, Iterator, List, Optional
 
 import requests
@@ -23,14 +23,14 @@ class IngestionStats:
     records_fetched: int = 0
     records_inserted: int = 0
     pages_fetched: int = 0
-    start_time: datetime = datetime.utcnow()
+    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def as_dict(self) -> Dict[str, int]:
         return {
             "records_fetched": self.records_fetched,
             "records_inserted": self.records_inserted,
             "pages_fetched": self.pages_fetched,
-            "duration_seconds": int((datetime.utcnow() - self.start_time).total_seconds()),
+            "duration_seconds": int((datetime.now(timezone.utc) - self.start_time).total_seconds()),
         }
 
 
