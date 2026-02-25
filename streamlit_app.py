@@ -16,7 +16,7 @@ def load_aggregated_data(path: Optional[str] = None) -> pd.DataFrame:
     dataset_path = Path(path) if path else config.DERIVED_DATA_DIR / "segment_time_counts.parquet"
     if not dataset_path.exists():
         st.warning(
-            "Aggregated dataset not found. Run `python -m parking_ticket_map.cli aggregate` to build it first."
+            "Aggregated dataset not found. Run `python -m parking_ticket_map aggregate` to build it first."
         )
         return pd.DataFrame()
     return pd.read_parquet(dataset_path)
