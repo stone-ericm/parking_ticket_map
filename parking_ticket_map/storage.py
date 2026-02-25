@@ -79,15 +79,13 @@ class TicketDatabase:
         if not records:
             return 0
 
-        columns = list(config.RAW_FIELD_MAPPING.keys())
+        columns = list(config.RAW_FIELDS)
         placeholders = ", ".join(["?"] * (len(columns) + 1))
         sql = f"INSERT OR REPLACE INTO raw_tickets ({', '.join(columns)}, raw_payload) VALUES ({placeholders})"
 
         to_insert: List[List[object]] = []
         for record in records:
-            row: List[object] = []
-            for column, source_field in config.RAW_FIELD_MAPPING.items():
-                row.append(record.get(source_field))
+            row: List[object] = [record.get(field) for field in config.RAW_FIELDS]
             row.append(json.dumps(record))
             to_insert.append(row)
 
